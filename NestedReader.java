@@ -13,6 +13,8 @@ public class NestedReader {
         this.input = input;
     }
     public String getNestedString() throws IOException {
-        return null;
+        String line = input.readLine();
+        System.out.println(line);
+        return line;
     }
 }
