@@ -3,9 +3,14 @@
  */
 
 import java.io.*;
+import java.util.Arrays;
+
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupDir;
+
+import javax.tools.*;
+import com.sun.source.util.JavacTask;
 public class JavaREPL {
     public static int i = 0; // count the number of complete declarations/statements
     public static final  String CLASSFILES = "InheritedClasses/"; // path of all generated classes
@@ -24,7 +29,7 @@ public class JavaREPL {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		//Obtain the complete declarations or statements through NestedReader
 		NestedReader nestedReader = new NestedReader(input);
-		while(true){
+		//while(true){
 			//Obtain a complete declaration/statement as a "line"
 			String line = nestedReader.getNestedString();
 			i++;
@@ -33,14 +38,15 @@ public class JavaREPL {
 				writeToFile(i, line, "");
 			else
 				writeToFile(i, "", line);
-
 			//TODO: Compile and Execute
-		}
+		//}
     }
 
-    //if the line is a declaration
+    //parse the java file with the line as a declaration
 	private static boolean isDeclaration(String line) throws IOException{
-		File temp = new File(CLASSFILES+"temp.java");
+		//Create a temp.java file to see if it can parse properly
+		String tempFileName = CLASSFILES+"temp.java";
+		File temp = new File(tempFileName);
 		FileOutputStream fos = new FileOutputStream(temp);
 		DataOutputStream dos = new DataOutputStream(fos);
 		ST st = templates.getInstanceOf("Interp_i");
@@ -49,13 +55,22 @@ public class JavaREPL {
 		st.add("statement", "");
 		String tempContent = st.render();
 		dos.writeBytes(tempContent);
-		//TODO: compile a java file
-		boolean isDeclaration = false;
+
+		//parse temp.java
+		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+		StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
+		Iterable<? extends JavaFileObject> compilationUnits = fileManager
+				.getJavaFileObjectsFromStrings(Arrays.asList(tempFileName));
+		JavacTask task = (JavacTask) compiler.getTask(null, fileManager, diagnostics, null,
+				null, compilationUnits);
+		task.parse();
 		temp.delete();
-		return isDeclaration;
+		System.out.println(diagnostics.getDiagnostics().size() == 0);
+		return diagnostics.getDiagnostics().size() == 0;
 	}
 
-	//return the name of the new class
+	//write to a new java file inheriting the previous class.
 	private static void writeToFile(int i, String declaration, String statement) throws IOException {
 		File newClassFile = new File(CLASSFILES+"Interp_"+i+".java");
 		FileOutputStream fos = new FileOutputStream(newClassFile);
@@ -65,8 +80,13 @@ public class JavaREPL {
 		st.add("declaration", declaration);
 		st.add("statement", statement);
 		String newClass = st.render();
-		System.out.println(newClass);
+		//System.out.println(newClass);
 		dos.writeBytes(newClass);
+	}
+
+	private static void compile(){
+
+
 	}
 
 

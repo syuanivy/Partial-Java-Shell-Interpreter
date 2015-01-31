@@ -14,7 +14,7 @@ public class NestedReader {
     }
     public String getNestedString() throws IOException {
         String line = input.readLine();
-        System.out.println(line);
+        //System.out.println(line);
         return line;
     }
 }
