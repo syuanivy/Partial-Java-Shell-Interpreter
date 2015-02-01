@@ -6,6 +6,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import org.stringtemplate.v4.ST;
@@ -19,6 +21,7 @@ public class JavaREPL {
     public static int i = 0; // count the number of complete declarations/statements
     public static final  String CLASSFILES = "InheritedClasses/"; // path of all generated classes
 
+
     public static final String ST = "ST";  //path of string templates
     public static final STListener stListener = new STListener();
     public static final NestedReader nr = new NestedReader(null);
@@ -30,15 +33,21 @@ public class JavaREPL {
     }
 
     public static void main(String[] args) throws IOException {
+		deleteFiles();
+		//Specify the folder of files and create a ClassLoader
+		URL[] urls = new URL[] { new URL("file:" + System.getProperty("user.dir") + "/" + CLASSFILES)};
+		URLClassLoader ucl = new URLClassLoader(urls);
 		//Read from stdIn
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		compile(CLASSFILES + "Interp_0.java");
 		//Obtain the complete declarations or statements through NestedReader
 		NestedReader nestedReader = new NestedReader(input);
 		while(nestedReader.c != -1){
+			System.out.print(">");
 			//Obtain a complete declaration/statement as a "line"
 			String line = nestedReader.getNestedString();
-
+            if(nestedReader.c == -1) return;
+			if(line.length() == 0) continue;
 			String newClassName = "Interp_" + (i + 1);
 			boolean isDeclaration = isDeclaration(line);
 			writeToFile(i + 1, isDeclaration,line);
@@ -46,10 +55,11 @@ public class JavaREPL {
 			if (ok){
 				i++;
 				if (!isDeclaration)
-					execute(newClassName);
+					execute(newClassName, ucl);
 			}
 		}
-    }
+
+	}
 
     //parse the java file with the line as a declaration
 	private static boolean isDeclaration(String line) throws IOException{
@@ -102,8 +112,7 @@ public class JavaREPL {
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 		StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
-		//fileManager.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(new File(System.getProperty("./InheritedClasses"))));
-		fileManager.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(new File("InheritedClasses")));
+		fileManager.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(new File(CLASSFILES)));
 
 		Iterable<? extends JavaFileObject> compilationUnits = fileManager
 				.getJavaFileObjectsFromStrings(Arrays.asList(fileName));
@@ -112,23 +121,30 @@ public class JavaREPL {
 						null, null, compilationUnits);
 		boolean ok = task.call();
 		System.out.println(ok);
-		for(Diagnostic diag: diagnostics.getDiagnostics()){
-			System.err.println("line" + diag.getLineNumber()+ ": " +diag.getMessage(null));
+		if(!ok){
+			for(Diagnostic diag: diagnostics.getDiagnostics()){
+				System.err.println("line" + diag.getLineNumber()+ ": " +diag.getMessage(null));
+			}
+			Files.deleteIfExists(Paths.get(fileName));
 		}
 		return ok;
 	}
 
 	//use URLClassLoader to load the new class, execute it
-	private static void execute(String className) throws MalformedURLException{
-		//Specify the folder of files
-		URL[] urls = new URL[] { new URL("file:" + System.getProperty("user.dir") + "/" + CLASSFILES)};
-        //Load the classes and execute
-		URLClassLoader ucl = new URLClassLoader(urls);
+	private static void execute(String className, URLClassLoader ucl) throws MalformedURLException{
 		try {
 			ucl.loadClass(className).getDeclaredMethod("exec", new Class[]{})
 					.invoke(null, new Object[]{});
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	//after existing the while loop, delete all generated .java and .class files
+	private static void deleteFiles() throws IOException{
+		for(int j = 1; j<=10; j++){
+			Files.deleteIfExists(Paths.get(CLASSFILES+"Interp_"+j+".java"));
+			Files.deleteIfExists(Paths.get(CLASSFILES+"Interp_"+j+".class"));
 		}
 	}
 }
