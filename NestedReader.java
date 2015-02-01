@@ -17,4 +17,8 @@ public class NestedReader {
         //System.out.println(line);
         return line;
     }
+    public void consume() throws IOException {
+        buf.append((char)c);
+        c = input.read();
+    }
 }
