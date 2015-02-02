@@ -36,6 +36,8 @@ public class NestedReader {
         }
         String line = buf.toString();
         buf.delete(0,buf.length());
+        if(line.contains("print "))
+            return replacePrint(line);
         return line ;
     }
 
@@ -103,6 +105,18 @@ public class NestedReader {
                     consume();
             }
         }
+    }
+
+    private String replacePrint(String line){
+        String[] splits = line.split("print ");
+        String after = splits[splits.length-1];
+        String replaced;
+        if(after.charAt(after.length()-1) == ';'){
+            replaced = after.substring(0,after.length()-1);
+        }else{
+            replaced = after;
+        }
+        return "System.out.println("+replaced+");";
     }
 
     private void consume() throws IOException {

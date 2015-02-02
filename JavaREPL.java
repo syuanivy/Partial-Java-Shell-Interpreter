@@ -51,6 +51,7 @@ public class JavaREPL {
 			String line = nestedReader.getNestedString();
             if(nestedReader.c == -1) return;
 			if(line.length() == 0) continue;
+
 			String newClassName = "Interp_" + (i + 1);
 			boolean isDeclaration = isDeclaration(line);
 			writeToFile(i + 1, isDeclaration,line);
@@ -61,7 +62,6 @@ public class JavaREPL {
 					execute(newClassName, ucl);
 			}
 		}
-
 	}
 
     //parse the java file with the line as a declaration
