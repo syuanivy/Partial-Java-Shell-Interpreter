@@ -1,8 +1,6 @@
 temp(declaration) ::= <<
 
-import java.io.*;
-import java.util.*;
-public class Temp {
+class Temp {
     $declaration$
     public static void exec() {
     }

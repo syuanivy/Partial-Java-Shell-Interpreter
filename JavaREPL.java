@@ -33,13 +33,16 @@ public class JavaREPL {
     }
 
     public static void main(String[] args) throws IOException {
-		deleteFiles();
+
+		deleteFiles(); //make sure the folder is empty
+        createInterp0();//create and compile Interp_0 for subsequent inheritance
+
 		//Specify the folder of files and create a ClassLoader
 		URL[] urls = new URL[] { new URL("file:" + System.getProperty("user.dir") + "/" + CLASSFILES)};
 		URLClassLoader ucl = new URLClassLoader(urls);
+
 		//Read from stdIn
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-		compile(CLASSFILES + "Interp_0.java");
 		//Obtain the complete declarations or statements through NestedReader
 		NestedReader nestedReader = new NestedReader(input);
 		while(nestedReader.c != -1){
@@ -83,7 +86,6 @@ public class JavaREPL {
 				null, compilationUnits);
 		task.parse();
 		temp.delete();
-		System.out.println(diagnostics.getDiagnostics().size() == 0);
 		return diagnostics.getDiagnostics().size() == 0;
 	}
 
@@ -103,7 +105,6 @@ public class JavaREPL {
 			st.add("statement", line);
 		}
 		String newClass = st.render();
-		System.out.println(newClass);
 		dos.writeBytes(newClass);
 	}
 
@@ -120,10 +121,9 @@ public class JavaREPL {
 				compiler.getTask(null, fileManager, diagnostics,
 						null, null, compilationUnits);
 		boolean ok = task.call();
-		System.out.println(ok);
 		if(!ok){
 			for(Diagnostic diag: diagnostics.getDiagnostics()){
-				System.err.println("line" + diag.getLineNumber()+ ": " +diag.getMessage(null));
+				System.out.println("line" + diag.getLineNumber()+ ": " +diag.getMessage(null));
 			}
 			Files.deleteIfExists(Paths.get(fileName));
 		}
@@ -137,14 +137,29 @@ public class JavaREPL {
 					.invoke(null, new Object[]{});
 		} catch (Exception e) {
 			e.printStackTrace();
+		}finally{
+			return;
 		}
 	}
 
 	//after existing the while loop, delete all generated .java and .class files
 	private static void deleteFiles() throws IOException{
-		for(int j = 1; j<=10; j++){
+		int numOfFiles = new File(CLASSFILES).listFiles().length;
+		for(int j = 0; j<=numOfFiles/2; j++){
 			Files.deleteIfExists(Paths.get(CLASSFILES+"Interp_"+j+".java"));
 			Files.deleteIfExists(Paths.get(CLASSFILES+"Interp_"+j+".class"));
 		}
+	}
+
+	//create the first file for subsequent inheritance
+	private static void createInterp0() throws IOException{
+		//Create a temp.java file with the input line as a declaration
+		String firstFileName = CLASSFILES+"Interp_0.java";
+		File first = new File(firstFileName);
+		FileOutputStream fos = new FileOutputStream(first);
+		DataOutputStream dos = new DataOutputStream(fos);
+		ST Interp0 = templates.getInstanceOf("Interp_0");
+		dos.writeBytes(Interp0.render());
+		compile(firstFileName);
 	}
 }

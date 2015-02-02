@@ -1,3 +1,5 @@
+Interp_0() ::= <<
+
 import java.io.*;
 import java.util.*;
 public class Interp_0 {
@@ -5,3 +7,5 @@ public class Interp_0 {
     }
 }
 
+
+>>
