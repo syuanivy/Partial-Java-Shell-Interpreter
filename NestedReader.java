@@ -18,7 +18,7 @@ public class NestedReader {
     public String getNestedString() throws IOException {
         Stack<Character> stack = new Stack<Character>();
         c = input.read();
-        while(c != -1 && !(c == (int)'\n' && stack.isEmpty() )){
+        while(c != (int) '$' && !(c == (int)'\n' && stack.isEmpty() )){
             if(isBracket(c)){
                 processBracket(c, stack);
                 continue;

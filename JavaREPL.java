@@ -20,6 +20,7 @@ public class JavaREPL {
 
     public static int i = 0; // count the number of complete declarations/statements
     public static final  String CLASSFILES = "InheritedClasses/"; // path of all generated classes
+	public static final  String OUTPUTFILES ="out/production/syuanivy-repl/"; //path of output
 
 
     public static final String ST = "ST";  //path of string templates
@@ -45,7 +46,7 @@ public class JavaREPL {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		//Obtain the complete declarations or statements through NestedReader
 		NestedReader nestedReader = new NestedReader(input);
-		while(nestedReader.c != -1){
+		while(nestedReader.c != '$'){
 			System.out.print(">");
 			//Obtain a complete declaration/statement as a "line"
 			String line = nestedReader.getNestedString();
@@ -62,6 +63,7 @@ public class JavaREPL {
 					execute(newClassName, ucl);
 			}
 		}
+		deleteFiles();
 	}
 
     //parse the java file with the line as a declaration
@@ -122,8 +124,8 @@ public class JavaREPL {
 						null, null, compilationUnits);
 		boolean ok = task.call();
 		if(!ok){
-			for(Diagnostic diag: diagnostics.getDiagnostics()){
-				System.out.println("line" + diag.getLineNumber()+ ": " +diag.getMessage(null));
+			for(Diagnostic diag: diagnostics.getDiagnostics()) {
+				System.out.println("line" + diag.getLineNumber() + ": " +diag.getMessage(null));
 			}
 			Files.deleteIfExists(Paths.get(fileName));
 		}
