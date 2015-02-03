@@ -7,24 +7,25 @@ import java.util.Stack;
  * Created by ivy on 1/27/15.
  */
 public class NestedReader {
-    StringBuilder buf;
+    StringBuilder buf; //building a complete declaration/statement
     BufferedReader input;
-    int c;
+    int c;//look ahead character
 
     public NestedReader(BufferedReader input) {
         this.input = input;
         buf = new StringBuilder();
     }
+
     public String getNestedString() throws IOException {
         Stack<Character> stack = new Stack<Character>();
         c = input.read();
-        while(c != (int) '$' && !(c == (int)'\n' && stack.isEmpty() )){
+        while(c != -1 && !(c == (int)'\n' && stack.isEmpty() )){
             if(isBracket(c)){
                 processBracket(c, stack);
                 continue;
             }
             if(isQuotation(c)){
-                processQuotation(c);
+                processQuotation(c, stack);
                 continue;
             }
             if(isSlash(c)) {
@@ -36,14 +37,14 @@ public class NestedReader {
         }
         String line = buf.toString();
         buf.delete(0,buf.length());
-        if(line.contains("print "))
+        if(line.startsWith("print "))
             return replacePrint(line);
         return line ;
     }
 
     private boolean isBracket(int c){
         ArrayList<Character> brackets = new ArrayList<Character>();
-        brackets.add('{');brackets.add('(');brackets.add('[');brackets.add(']');brackets.add(')');brackets.add('}');
+        brackets.add('{');brackets.add('(');brackets.add(')');brackets.add('}'); brackets.add('[');brackets.add(']');
         if(brackets.contains((char)c))
             return true;
         else
@@ -74,7 +75,7 @@ public class NestedReader {
             return false;
     }
 
-    private void processQuotation(int c) throws IOException{
+    private void processQuotation(int c, Stack<Character> stack) throws IOException{
         int start = c;
         consume();
         while(this.c != -1 && this.c != start && this.c != (int) '\n'){ // exits on closing quotation mark on the same line
@@ -82,6 +83,10 @@ public class NestedReader {
                 processSlash(this.c);
             else
                 consume();
+        }
+        if(this.c == (int)'\n'){
+            stack.clear();
+            return;
         }
         consume();//consume the closing quotation mark
     }
@@ -101,18 +106,25 @@ public class NestedReader {
         }else{        //forward slash
             consume();
             if(this.c == 47)  {// second forward slash, this is a comment
+                buf.deleteCharAt(buf.length()-1);
                 while(this.c != -1 && this.c!= (int)'\n')   // read to the end
-                    consume();
+                    this.c=input.read();
             }
         }
     }
 
+    //allow statement print ***; or print ***
     private String replacePrint(String line){
-        String[] splits = line.split("print ");
+        String[] splits = line.split("print ",2);
         String after = splits[splits.length-1];
         String replaced;
         if(after.charAt(after.length()-1) == ';'){
-            replaced = after.substring(0,after.length()-1);
+            int lastNonSemiColon = after.length()-2;
+            //suports multiple semi colons after the print statement
+            while(lastNonSemiColon >= 0 && after.charAt(lastNonSemiColon) == ';'){
+                lastNonSemiColon--;
+            }
+            replaced = after.substring(0,lastNonSemiColon+1);
         }else{
             replaced = after;
         }

@@ -16,19 +16,15 @@ import org.stringtemplate.v4.STGroupDir;
 
 import javax.tools.*;
 import com.sun.source.util.JavacTask;
+
 public class JavaREPL {
 
     public static int i = 0; // count the number of complete declarations/statements
     public static final  String CLASSFILES = "InheritedClasses/"; // path of all generated classes
-	public static final  String OUTPUTFILES ="out/production/syuanivy-repl/"; //path of output
-
 
     public static final String ST = "ST";  //path of string templates
-    public static final STListener stListener = new STListener();
-    public static final NestedReader nr = new NestedReader(null);
     static STGroup templates = new STGroupDir(ST);
     static {
-        templates.setListener(stListener);
         templates.delimiterStartChar = '$';
         templates.delimiterStopChar = '$';
     }
@@ -46,24 +42,24 @@ public class JavaREPL {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		//Obtain the complete declarations or statements through NestedReader
 		NestedReader nestedReader = new NestedReader(input);
-		while(nestedReader.c != '$'){
+		while(nestedReader.c != -1){
 			System.out.print(">");
 			//Obtain a complete declaration/statement as a "line"
 			String line = nestedReader.getNestedString();
             if(nestedReader.c == -1) return;
 			if(line.length() == 0) continue;
 
-			String newClassName = "Interp_" + (i + 1);
-			boolean isDeclaration = isDeclaration(line);
-			writeToFile(i + 1, isDeclaration,line);
-			boolean ok = compile(CLASSFILES + newClassName + ".java");
+			String newClassName = "Interp_" + (i + 1);//name of new class
+			boolean isDeclaration = isDeclaration(line);//if it is declaration
+			writeToFile(i + 1, isDeclaration,line); //write to .java file
+			boolean ok = compile(CLASSFILES + newClassName + ".java"); //compile
 			if (ok){
-				i++;
+				i++; //compiled successfully
 				if (!isDeclaration)
-					execute(newClassName, ucl);
+					execute(newClassName, ucl); //execute statement
 			}
 		}
-		deleteFiles();
+		deleteFiles(); //clear generated files
 	}
 
     //parse the java file with the line as a declaration
@@ -125,7 +121,7 @@ public class JavaREPL {
 		boolean ok = task.call();
 		if(!ok){
 			for(Diagnostic diag: diagnostics.getDiagnostics()) {
-				System.out.println("line" + diag.getLineNumber() + ": " +diag.getMessage(null));
+				System.err.println("line" + diag.getLineNumber() + ": " +diag.getMessage(null));
 			}
 			Files.deleteIfExists(Paths.get(fileName));
 		}
