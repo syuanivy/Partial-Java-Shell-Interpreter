@@ -39,7 +39,7 @@ public class NestedReader {
         buf.delete(0,buf.length());
         if(line.startsWith("print "))
             return replacePrint(line);
-        return line ;
+        return line.trim() ;
     }
 
     private boolean isBracket(int c){
@@ -119,12 +119,12 @@ public class NestedReader {
         String after = splits[splits.length-1];
         String replaced;
         if(after.charAt(after.length()-1) == ';'){
-            int lastNonSemiColon = after.length()-2;
+            int firstTrailingSemiColon = after.length()-1;
             //suports multiple semi colons after the print statement
-            while(lastNonSemiColon >= 0 && after.charAt(lastNonSemiColon) == ';'){
-                lastNonSemiColon--;
+            while(firstTrailingSemiColon-1 >= 0 && after.charAt(firstTrailingSemiColon-1) == ';'){
+                firstTrailingSemiColon--;
             }
-            replaced = after.substring(0,lastNonSemiColon+1);
+            replaced = after.substring(0,firstTrailingSemiColon);
         }else{
             replaced = after;
         }
