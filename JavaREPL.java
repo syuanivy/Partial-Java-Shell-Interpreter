@@ -20,7 +20,7 @@ import com.sun.source.util.JavacTask;
 public class JavaREPL {
 
     public static int i = 0; // count the number of complete declarations/statements
-    public static final  String CLASSFILES = "InheritedClasses/"; // path of all generated classes
+	public static final String tempDir = System.getProperty("java.io.tmpdir")+"/";  //system temp directory to saved the generated files
 
     public static final String ST = "ST";  //path of string templates
     static STGroup templates = new STGroupDir(ST);
@@ -30,12 +30,11 @@ public class JavaREPL {
     }
 
     public static void main(String[] args) throws IOException {
-
 		deleteFiles(); //make sure the folder is empty
         createInterp0();//create and compile Interp_0 for subsequent inheritance
 
 		//Specify the folder of files and create a ClassLoader
-		URL[] urls = new URL[] { new URL("file:" + System.getProperty("user.dir") + "/" + CLASSFILES)};
+		URL[] urls = new URL[] { new URL("file:" + tempDir)};
 		URLClassLoader ucl = new URLClassLoader(urls);
 
 		//Read from stdIn
@@ -52,7 +51,7 @@ public class JavaREPL {
 			String newClassName = "Interp_" + (i + 1);//name of new class
 			boolean isDeclaration = isDeclaration(line);//if it is declaration
 			writeToFile(i + 1, isDeclaration,line); //write to .java file
-			boolean ok = compile(CLASSFILES + newClassName + ".java"); //compile
+			boolean ok = compile(tempDir + newClassName + ".java"); //compile
 			if (ok){
 				i++; //compiled successfully
 				if (!isDeclaration)
@@ -65,7 +64,7 @@ public class JavaREPL {
     //parse the java file with the line as a declaration
 	private static boolean isDeclaration(String line) throws IOException{
 		//Create a temp.java file with the input line as a declaration
-		String tempFileName = CLASSFILES+"temp.java";
+		String tempFileName = tempDir +"temp.java";
 		File temp = new File(tempFileName);
 		FileOutputStream fos = new FileOutputStream(temp);
 		DataOutputStream dos = new DataOutputStream(fos);
@@ -89,7 +88,7 @@ public class JavaREPL {
 
 	//write to a new java file inheriting the previous class.
 	private static void writeToFile(int sub, boolean isDeclaration, String line) throws IOException {
-		File newClassFile = new File(CLASSFILES+"Interp_"+(i+1)+".java");
+		File newClassFile = new File(tempDir +"Interp_"+(i+1)+".java");
 		FileOutputStream fos = new FileOutputStream(newClassFile);
 		DataOutputStream dos = new DataOutputStream(fos);
 		ST st = templates.getInstanceOf("Interp_i");
@@ -111,7 +110,7 @@ public class JavaREPL {
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 		StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
-		fileManager.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(new File(CLASSFILES)));
+		fileManager.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(new File(tempDir)));
 
 		Iterable<? extends JavaFileObject> compilationUnits = fileManager
 				.getJavaFileObjectsFromStrings(Arrays.asList(fileName));
@@ -142,17 +141,17 @@ public class JavaREPL {
 
 	//after existing the while loop, delete all generated .java and .class files
 	private static void deleteFiles() throws IOException{
-		int numOfFiles = new File(CLASSFILES).listFiles().length;
+		int numOfFiles = new File(tempDir).listFiles().length;
 		for(int j = 0; j<=numOfFiles/2; j++){
-			Files.deleteIfExists(Paths.get(CLASSFILES+"Interp_"+j+".java"));
-			Files.deleteIfExists(Paths.get(CLASSFILES+"Interp_"+j+".class"));
+			Files.deleteIfExists(Paths.get(tempDir +"Interp_"+j+".java"));
+			Files.deleteIfExists(Paths.get(tempDir +"Interp_"+j+".class"));
 		}
 	}
 
 	//create the first file for subsequent inheritance
 	private static void createInterp0() throws IOException{
 		//Create a temp.java file with the input line as a declaration
-		String firstFileName = CLASSFILES+"Interp_0.java";
+		String firstFileName = tempDir +"Interp_0.java";
 		File first = new File(firstFileName);
 		FileOutputStream fos = new FileOutputStream(first);
 		DataOutputStream dos = new DataOutputStream(fos);

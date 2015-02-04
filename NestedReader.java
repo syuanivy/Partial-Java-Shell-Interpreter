@@ -118,7 +118,10 @@ public class NestedReader {
         String[] splits = line.split("print ",2);
         String after = splits[splits.length-1];
         String replaced;
-        if(after.charAt(after.length()-1) == ';'){
+
+        if(after.length()==0){
+            return "";
+        }else if( after.charAt(after.length()-1) == ';'){
             int firstTrailingSemiColon = after.length()-1;
             //suports multiple semi colons after the print statement
             while(firstTrailingSemiColon-1 >= 0 && after.charAt(firstTrailingSemiColon-1) == ';'){
