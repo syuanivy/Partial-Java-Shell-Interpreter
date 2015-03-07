@@ -42,7 +42,7 @@ public class JavaREPL {
 		//Obtain the complete declarations or statements through NestedReader
 		NestedReader nestedReader = new NestedReader(input);
 		while(nestedReader.c != -1){
-			System.out.print(">");
+			System.out.print("> ");
 			//Obtain a complete declaration/statement as a "line"
 			String line = nestedReader.getNestedString();
             if(nestedReader.c == -1) return;
